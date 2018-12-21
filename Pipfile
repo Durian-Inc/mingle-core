@@ -11,6 +11,7 @@ flask-peewee = "*"
 peewee = "*"
 wtforms = "*"
 wtf-peewee = "*"
+psycopg2 = "*"
 
 [requires]
 python_version = "3.7"
