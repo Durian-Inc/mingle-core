@@ -38,7 +38,7 @@ def logout():
     # Clear session stored data
     session.clear()
     # Redirect user to logout endpoint
-    params = {'returnTo': url_for('routes.home', _external=True), 'client_id': 'rl90D1k9BRuLjKAGPKPrUHlwVF10auGb'}
+    params = {'returnTo': url_for('routes.home', _external=True), 'client_id': 'CLIENT-ID'}
     return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
 @routes.route('/user_info', methods=['GET'])
