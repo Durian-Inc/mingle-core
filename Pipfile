@@ -7,8 +7,12 @@ verify_ssl = true
 
 [packages]
 flask = "*"
+flask-cors = "*"
 flask-peewee = "*"
 peewee = "*"
+python-dotenv = "*"
+python-jose-cryptodome = "*"
+six = "*"
 wtforms = "*"
 wtf-peewee = "*"
 psycopg2 = "*"
