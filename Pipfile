@@ -6,12 +6,12 @@ verify_ssl = true
 [dev-packages]
 
 [packages]
+authlib = "*"
 flask = "*"
-flask-cors = "*"
 flask-peewee = "*"
 peewee = "*"
 python-dotenv = "*"
-python-jose-cryptodome = "*"
+requests = "*"
 six = "*"
 wtforms = "*"
 wtf-peewee = "*"

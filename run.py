@@ -1,3 +1,3 @@
 from app import app
 
-app.run(host='localhost', port=5000, debug=True)
+app.run(host='localhost', port=8080, debug=True)
