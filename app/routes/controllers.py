@@ -11,7 +11,6 @@ routes = Blueprint('routes', __name__, url_prefix='/')
 @routes.route('/', methods=['GET'])
 def home():
     stuff = [x.name for x in User.select()]
-    print(CLIENT_ID)
     return str(stuff)
 
 @routes.route('/callback', methods=['GET'])
