@@ -1,7 +1,7 @@
 from flask import (Blueprint, flash, g, redirect, render_template, request,
                    session, url_for)
 
-from app import db
+from app import db, CLIENT_ID, SECRET_KEY
 from app.models import User
 from app.routes.auth_utils import (auth0, requires_auth, urlencode, jsonify)
 
@@ -11,6 +11,7 @@ routes = Blueprint('routes', __name__, url_prefix='/')
 @routes.route('/', methods=['GET'])
 def home():
     stuff = [x.name for x in User.select()]
+    print(CLIENT_ID)
     return str(stuff)
 
 @routes.route('/callback', methods=['GET'])
@@ -38,7 +39,7 @@ def logout():
     # Clear session stored data
     session.clear()
     # Redirect user to logout endpoint
-    params = {'returnTo': url_for('routes.home', _external=True), 'client_id': 'CLIENT-ID'}
+    params = {'returnTo': url_for('routes.home', _external=True), 'client_id': CLIENT_ID}
     return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
 @routes.route('/user_info', methods=['GET'])
