@@ -1,4 +1,4 @@
-from peewee import Model
+from playhouse.postgres_ext import Model
 
 from app import db
 
