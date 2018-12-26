@@ -3,7 +3,7 @@ from playhouse.postgres_ext import CharField, ForeignKeyField, IntegerField
 
 
 class ChatMembership(BaseModel):
-    chat = ForeignKeyField(Chat, backref='membership')
-    user = ForeignKeyField(User, backref='membership')
+    chat = ForeignKeyField(Chat)
+    user = ForeignKeyField(User)
     cursor = IntegerField(default=0)
     rank = CharField(default="member")

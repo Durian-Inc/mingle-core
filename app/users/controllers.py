@@ -1,7 +1,7 @@
 from flask import (Blueprint, redirect, request, session, url_for)
 
 from app import CLIENT_ID
-from app.models import AuthId, User
+from app.models import AuthId, User, ChatMembership, Chat
 from app.users.auth_utils import auth0, jsonify, requires_auth, urlencode
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
@@ -69,3 +69,15 @@ def update(user_id):
         User.user_id == user_id)
     query.execute()
     return "success"
+
+
+@users.route('/<user_id>/chats', methods=['GET'])
+def user_chats(user_id):
+    # user = User.get(User.user_id == user_id)
+    # return str(user.display_name)
+    stuff = []
+    res = ChatMembership.select().where(ChatMembership.user_id == user_id)
+    for membership in res:
+        thing = Chat.get(Chat.chat_id == membership.chat_id)
+        stuff.append(thing.chat_blob)
+    return jsonify(stuff)

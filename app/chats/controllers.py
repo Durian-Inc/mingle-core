@@ -1,6 +1,7 @@
-from flask import (Blueprint, flash, g, redirect, render_template, request,
-                   session, url_for)
+from flask import (jsonify, Blueprint, flash, g, redirect, render_template,
+                   request, session, url_for)
 
+import json
 from app import CLIENT_ID, SECRET_KEY
 from app.models import AuthId, User, Chat, ChatMembership
 
@@ -30,3 +31,25 @@ def add_user_to_chat(chat_id):
     # rank = data.get("rank")
     ChatMembership.create(chat_id=chat_id, user_id=user_id)
     return "nice!"
+
+
+@chats.route('/<chat_id>/message', methods=['POST'])
+def send_message_to_chat(chat_id):
+    data = request.get_json()
+
+    kind = data.get("type")
+    message = data.get("content")
+    size = data.get("size")
+
+    data = {
+        "sender_id": 1,
+        "type": kind,
+        "content": message,
+        "size": size,
+        "seen_by": []
+    }
+    chat = Chat.get(Chat.chat_id == chat_id).chat_blob
+    chat.append(data)
+    query = Chat.update(chat_blob=chat).where(Chat.chat_id == chat_id)
+    query.execute()
+    return jsonify(data)
