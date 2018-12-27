@@ -14,6 +14,8 @@ load_dotenv(dotenv_path='./.env')
 import os
 CLIENT_ID = os.getenv("CLIENT-ID")
 SECRET_KEY = os.getenv("SECRET-KEY")
+AUTH0_DOMAIN = os.getenv("AUTH0-DOMAIN")
+API_AUDIENCE = os.getenv("API-AUDIENCE")
 
 from app.routes.controllers import routes
 

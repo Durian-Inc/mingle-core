@@ -7,10 +7,13 @@ verify_ssl = true
 
 [packages]
 authlib = "*"
+auth0-python = "*"
 flask = "*"
+flask-cors = "*"
 flask-peewee = "*"
 peewee = "*"
 python-dotenv = "*"
+python-jose-cryptodome = "*"
 requests = "*"
 six = "*"
 wtforms = "*"
