@@ -1,3 +1,4 @@
+"""Ties a third party auth id to a User in our database"""
 from app.models import BaseModel, User
 from playhouse.postgres_ext import CharField, ForeignKeyField
 

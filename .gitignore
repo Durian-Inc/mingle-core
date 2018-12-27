@@ -3,3 +3,5 @@ app/__pycache__/__init__.cpython-37.pyc
 Pipfile.lock
 .env
 Pipfile.lock
+app/__pycache__/*
+__pycache__/
