@@ -3,14 +3,15 @@ from flask_cors import cross_origin
 
 from app import CLIENT_ID
 from app.models import AuthId, User, ChatMembership, Chat
-from app.users.auth_utils import jsonify, requires_auth
+from app.users.auth_utils import auth, jsonify, requires_auth
+from json import dumps
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
-
 
 @users.route('/', methods=['GET'])
 def home():
     stuff = [x.name for x in User.select()]
+    print(url_for('users.api_public'))
     return str(stuff)
 
 
@@ -64,6 +65,7 @@ def user_info():
 
 # needs auth later
 @users.route('/<user_id>', methods=['POST'])
+@requires_auth
 def update(user_id):
     data = request.get_json()
     query = User.update(phone_number=data.get("phone_number")).where(
@@ -83,19 +85,21 @@ def user_chats(user_id):
         stuff.append(thing.chat_blob)
     return jsonify(stuff)
 
-@users.route("/api/public")
+@auth.route('/public', methods=['GET', 'POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
-def public():
+def api_public():
+    # return(request.headers['Authorization'])
+    # return(jsonify(dict(request.headers)))
     """
         Route that requires no authentication.
     """
     response = "No login necessary"
     return jsonify(message=response)
 
-@users.route("/api/private")
+@auth.route('/private', methods=['GET', 'POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
-def private():
+def api_private():
     """
         Route that requires authentication
     """

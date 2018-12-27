@@ -3,11 +3,12 @@ from functools import wraps
 import json
 from werkzeug.exceptions import HTTPException
 
-from flask import (Flask, jsonify, redirect, render_template, session, url_for, _request_ctx_stack, request)
+from flask import (Blueprint, jsonify, redirect, render_template, session, url_for, _request_ctx_stack, request)
 from jose import jwt
 from six.moves.urllib.request import urlopen
 
 ALGORITHMS = ["RS256"]
+auth = Blueprint('auth', __name__, url_prefix='/auth/api/v1/')
 
 # Error handler
 class AuthError(Exception):
@@ -55,8 +56,7 @@ def requires_auth(f):
     @wraps(f)
     def decorated(*args, **kwargs):
         token = get_token_auth_header()
-        jsonurl = urlopen("https://"+AUTH0_DOMAIN+"/.well-known/jwks.json")
-        print(json.loads(sonurl.read()))
+        jsonurl = urlopen(AUTH0_DOMAIN+"/.well-known/jwks.json")
         jwks = json.loads(jsonurl.read())
         unverified_header = jwt.get_unverified_header(token)
         rsa_key = {}
@@ -76,7 +76,7 @@ def requires_auth(f):
                     rsa_key,
                     algorithms=ALGORITHMS,
                     audience=API_AUDIENCE,
-                    issuer="https://"+AUTH0_DOMAIN+"/"
+                    issuer=AUTH0_DOMAIN+"/"
                 )
             except jwt.ExpiredSignatureError:
                 raise AuthError({"code": "token_expired",
