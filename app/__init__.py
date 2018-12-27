@@ -1,12 +1,11 @@
 from flask import Flask, render_template
-from peewee import PostgresqlDatabase
-
+from playhouse.postgres_ext import PostgresqlExtDatabase
 
 app = Flask(__name__)
 
 app.config.from_object('config')
 
-db = PostgresqlDatabase(
+db = PostgresqlExtDatabase(
     'mingle', user='postgres', password='', host='127.0.0.1', port=5432)
 
 from dotenv import load_dotenv
@@ -17,11 +16,14 @@ SECRET_KEY = os.getenv("SECRET-KEY")
 AUTH0_DOMAIN = os.getenv("AUTH0-DOMAIN")
 API_AUDIENCE = os.getenv("API-AUDIENCE")
 
-from app.routes.controllers import routes
+from app.users.controllers import users
+from app.chats.controllers import chats
+
 
 @app.errorhandler(404)
 def not_found(error):
     return error, 404
 
 
-app.register_blueprint(routes)
+app.register_blueprint(users)
+app.register_blueprint(chats)
