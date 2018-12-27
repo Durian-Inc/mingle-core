@@ -14,47 +14,45 @@ def home():
     print(url_for('users.api_public'))
     return str(stuff)
 
+@users.route('/callback', methods=['GET'])
+def callback_handling():
+    # Handles response from token endpoint to get the userinfo
+    auth0.authorize_access_token()
+    resp = auth0.get('userinfo')
+    userinfo = resp.json()
 
-# @users.route('/callback', methods=['GET'])
-# def callback_handling():
-#     # Handles response from token endpoint to get the userinfo
-#     auth0.authorize_access_token()
-#     resp = auth0.get('userinfo')
-#     userinfo = resp.json()
+    # Store the user information in flask session.
+    session['jwt_payload'] = userinfo
+    session['profile'] = {
+        'user_id': userinfo['sub'],
+        'name': userinfo['name'],
+        'picture': userinfo['picture']
+    }
 
-#     # Store the user information in flask session.
-#     session['jwt_payload'] = userinfo
-#     session['profile'] = {
-#         'user_id': userinfo['sub'],
-#         'name': userinfo['name'],
-#         'picture': userinfo['picture']
-#     }
+    user = User.create(
+        display_name=userinfo['name'], photo_url=userinfo['picture'])
+    AuthId.create(user=user, auth_id=userinfo['sub'])
 
-#     user = User.create(
-#         display_name=userinfo['name'], photo_url=userinfo['picture'])
-#     AuthId.create(user=user, auth_id=userinfo['sub'])
+    return redirect(url_for('users.user_info'), )
 
-#     return redirect(url_for('users.user_info'), )
-
-
-# @users.route('/login', methods=['GET'])
-# def login():
-#     return auth0.authorize_redirect(
-#         redirect_uri='http://localhost:8080/api/v1/users/callback',
-#         audience='https://durian-inc.auth0.com/userinfo')
+@users.route('/login', methods=['GET'])
+def login():
+    return auth0.authorize_redirect(
+        redirect_uri='http://localhost:8080/api/v1/users/callback',
+        audience='https://durian-inc.auth0.com/userinfo')
 
 
-# @users.route('/logout')
-# def logout():
-#     # Clear session stored data
-#     session.clear()
-#     # Redirect user to logout endpoint
-#     # TODO: Make this throw error message
-#     params = {
-#         'returnTo': url_for('users.home', _external=True),
-#         'client_id': CLIENT_ID
-#     }
-#     return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
+@users.route('/logout')
+def logout():
+    # Clear session stored data
+    session.clear()
+    # Redirect user to logout endpoint
+    # TODO: Make this throw error message
+    params = {
+        'returnTo': url_for('users.home', _external=True),
+        'client_id': CLIENT_ID
+    }
+    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
 
 @users.route('/my_info', methods=['GET'])
