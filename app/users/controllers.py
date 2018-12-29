@@ -10,13 +10,6 @@ from app.auth_utils import auth, auth0, jsonify, requires_auth, requires_auth_to
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
 
-@users.route('/', methods=['GET'])
-def list_users():
-    """Debug function to list all users in the database"""
-    # TODO: remove
-    names = [x.display_name for x in User.select()]
-    return jsonify(names)
-
 @users.route('/callback', methods=['GET'])
 def callback_handling():
     """Handles response from token endpoint to get the userinfo"""
