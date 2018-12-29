@@ -2,6 +2,7 @@
 from flask import (jsonify, Blueprint, request)
 
 from app.models import Chat, Participation
+from playhouse.shortcuts import model_to_dict
 
 chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
 
@@ -10,7 +11,7 @@ chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
 def list_all_chats():
     """Debug function to list the names of all chats"""
     # TODO: remove
-    names = [x.name for x in Chat.select()]
+    names = [{x.id: x.name} for x in Chat.select()]
     return jsonify(names)
 
 
@@ -29,7 +30,7 @@ def create_chat():
     try:
         Chat.create(name=chat_name)
     except Exception as e:
-        return jsonify(success=False, error=e)
+        return jsonify(success=False, error=str(e))
     # TODO: Create Participation for each user specified
     # When implemented use: new_chat = Chat.create(name=chat_name)
     # for number in data.get("users"):
@@ -37,7 +38,16 @@ def create_chat():
     return jsonify(success=True)
 
 
-@chats.route('/<chat_id>', methods=['POST'])
+@chats.route('/<chat_id>', methods=['GET'])
+def get_chat_info(chat_id):
+    chat = Chat.get(Chat.id == chat_id)
+    users = [{
+        x.user.id: x.user.display_name
+    } for x in Participation.select().where(Participation.chat == chat_id)]
+    return jsonify(chat=model_to_dict(chat), users=users)
+
+
+@chats.route('/<chat_id>', methods=['PATCH'])
 def add_user_to_chat(chat_id):
     """
     Adds a specified user to a chat identified by url "chat_id"
@@ -59,11 +69,11 @@ def add_user_to_chat(chat_id):
         # TODO: Should it be querying for the chat and user
         Participation.create(chat=chat_id, user=user_id, rank=rank)
     except Exception as e:
-        return jsonify(success=False, error=e)
+        return jsonify(success=False, error=str(e))
     return jsonify(success=True)
 
 
-@chats.route('/<chat_id>/message', methods=['POST'])
+@chats.route('/<chat_id>/messages', methods=['POST'])
 def send_message_to_chat(chat_id):
     """
     Adds a specified message to a chat identified by url "chat_id"

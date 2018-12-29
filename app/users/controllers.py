@@ -10,6 +10,7 @@ from app.auth_utils import auth, auth0, jsonify, requires_auth, requires_auth_to
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
 
+
 @users.route('/callback', methods=['GET'])
 def callback_handling():
     """Handles response from token endpoint to get the userinfo"""
@@ -31,6 +32,7 @@ def callback_handling():
 
     return redirect(url_for('users.user_info'))
 
+
 @users.route('/login', methods=['GET'])
 def login():
     """Access the login page"""
@@ -51,6 +53,14 @@ def logout():
         'client_id': CLIENT_ID
     }
     return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
+
+
+@users.route('/', methods=['GET'])
+def list_all_users():
+    """Lists all users"""
+    # TODO: remove
+    names = [{x.id: x.display_name} for x in User.select()]
+    return jsonify(names)
 
 
 @users.route('/my_info', methods=['GET'])
@@ -99,6 +109,7 @@ def user_chats(user_id):
         chats.append(chat.messages)
     return jsonify(chats)
 
+
 @auth.route('/public', methods=['GET', 'POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 def api_public():
@@ -110,6 +121,7 @@ def api_public():
     response = "No login necessary"
     return jsonify(message=response)
 
+
 @auth.route('/private', methods=['GET', 'POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth_token
@@ -119,4 +131,3 @@ def api_private():
     """
     response = "You are likely logged in so you good."
     return jsonify(message=response)
-
