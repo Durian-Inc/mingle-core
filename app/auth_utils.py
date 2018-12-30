@@ -38,6 +38,9 @@ def requires_auth(func):
         if 'profile' not in session:
             # Redirect to Login page here
             return jsonify(success=False, error="Authentication failure")
+        else:
+            # Check if the sub form the session matches the sub from the decodded token
+            pass
         return func(*args, **kwargs)
 
     return decorated
@@ -160,7 +163,6 @@ def requires_scope(required_scope):
     if unverified_claims.get("scope"):
         token_scopes = unverified_claims["scope"].split()
         for token_scope in token_scopes:
-            print(token_scope)
             if token_scope == required_scope:
                 return True
     return False

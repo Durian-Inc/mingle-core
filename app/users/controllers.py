@@ -14,7 +14,8 @@ users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
 @users.route('/callback', methods=['GET'])
 def callback_handling():
     """Handles response from token endpoint to get the userinfo"""
-    auth0.authorize_access_token()
+    token = auth0.authorize_access_token()
+    session['token'] = token['id_token']
     resp = auth0.get('userinfo')
     userinfo = resp.json()
 
