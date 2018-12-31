@@ -1,13 +1,17 @@
 """Utility functions for using authentication"""
 from functools import wraps
+from flask_cors import cross_origin
 import json
 from werkzeug.exceptions import HTTPException
 
-from flask import Blueprint, jsonify, redirect, render_template, session, url_for, _request_ctx_stack, request
+from flask import Blueprint, jsonify, redirect, session, url_for, _request_ctx_stack, request
 from jose import jwt
-from app.serve import CLIENT_ID, SECRET_KEY, app, API_AUDIENCE, AUTH0_DOMAIN, AUTHORIZE_URL, ACCESS_TOKEN_URL
+from app.serve import CLIENT_ID, SECRET_KEY, app, API_AUDIENCE, AUTH0_DOMAIN, AUTHORIZE_URL, ACCESS_TOKEN_URL, REDIRECT_AUDIENCE, REDIRECT_URI
 from authlib.flask.client import OAuth
 from six.moves.urllib.request import urlopen
+from six.moves.urllib.parse import urlencode
+
+from app.users.utils import add_user
 
 ALGORITHMS = ["RS256"]
 auth = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
@@ -114,3 +118,65 @@ def requires_scope(required_scope):
             if token_scope == required_scope:
                 return True
     return False
+
+
+@auth.route('/callback', methods=['GET'])
+def callback_handling():
+    """Handles response from token endpoint to get the userinfo"""
+    token = auth0.authorize_access_token()
+    session['token'] = token['id_token']
+    resp = auth0.get('userinfo')
+    userinfo = resp.json()
+
+    # Store the user information in flask session.
+    session['jwt_payload'] = userinfo
+    session['profile'] = {
+        'user_id': userinfo['sub'],
+        'name': userinfo['name'],
+        'picture': userinfo['picture']
+    }
+
+    res = add_user(userinfo['name'], userinfo['picture'], userinfo['sub'])
+    if res:
+        return jsonify(success=False, error=res)
+    return redirect(url_for('users.user_info'))
+
+
+@auth.route('/login', methods=['GET'])
+def login():
+    """Access the login page"""
+    return auth0.authorize_redirect(
+        redirect_uri=REDIRECT_URI,
+        audience=REDIRECT_AUDIENCE)
+
+
+@auth.route('/logout', methods=['GET'])
+def logout():
+    """Removes user login details from session, logging out the user"""
+    session.clear()
+    # TODO: Make clear only significant session storage
+    # TODO: Handle error messages and auth for this function
+    # Redirect user to logout endpoint
+    params = {
+        'returnTo': url_for('auth.api_public', _external=True),
+        'client_id': CLIENT_ID
+    }
+    return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
+
+@auth.route('/public', methods=['GET', 'POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+def api_public():
+    """
+        Route that requires no authentication.
+    """
+    return jsonify(message="Public route with no auth")
+
+
+@auth.route('/private', methods=['GET', 'POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
+def api_private():
+    """
+        Route that requires authentication
+    """
+    return jsonify(message="Private route with auth")

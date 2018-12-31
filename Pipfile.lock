@@ -309,6 +309,7 @@
                 "sha256:ba62f6b9ae09a88cbe3328aa1ccc1696462d489c92f73920ec473773f2f92f84",
                 "sha256:c292deeca9176c162e5a8e19be9c60edb99e855dbad3ea032f94e23249873ba6"
             ],
+            "index": "pypi",
             "version": "==3.3.1"
         },
         "python-dotenv": {
