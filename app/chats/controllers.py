@@ -1,7 +1,8 @@
 """All routes related to chats and actions to modify them"""
 from flask import (jsonify, Blueprint, request)
 
-from app.models import Chat, Participation
+from app.models import Chat, Participation, User
+from app.chats.utils import chat_info
 from playhouse.shortcuts import model_to_dict
 
 chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
@@ -11,8 +12,8 @@ chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
 def list_all_chats():
     """Debug function to list the names of all chats"""
     # TODO: remove
-    names = [{x.id: x.name} for x in Chat.select()]
-    return jsonify(names)
+    chats = [model_to_dict(chat) for chat in Chat.select()]
+    return jsonify(chats), 200
 
 
 @chats.route('/', methods=['POST'])
@@ -27,27 +28,58 @@ def create_chat():
     # TODO: Add authentication allowing any logged in user to use
     data = request.get_json()
     chat_name = data.get("chat_name")
+
     try:
-        Chat.create(name=chat_name)
+        new_chat = Chat.create(name=chat_name)
     except Exception as e:
-        return jsonify(success=False, error=str(e))
-    # TODO: Create Participation for each user specified
-    # When implemented use: new_chat = Chat.create(name=chat_name)
-    # for number in data.get("users"):
-    # pass
-    return jsonify(success=True)
+        return str(e), 400
+    if data.get("users") is not None:
+        try:
+            for phone_number in data.get("users"):
+                user = User.select().where(
+                    User.phone_number == phone_number).get()
+                Participation.create(chat=new_chat, user=user, rank="member")
+        except Exception as e:
+            return str(e), 400
+
+    return jsonify(model_to_dict(new_chat)), 201
 
 
 @chats.route('/<chat_id>', methods=['GET'])
 def get_chat_info(chat_id):
-    chat = Chat.get(Chat.id == chat_id)
-    users = [{
-        x.user.id: x.user.display_name
-    } for x in Participation.select().where(Participation.chat == chat_id)]
-    return jsonify(chat=model_to_dict(chat), users=users)
+    chat = chat_info(chat_id)
+    return jsonify(chat), 200
 
 
 @chats.route('/<chat_id>', methods=['PATCH'])
+def update_chat(chat_id):
+    # TODO: Add authentication allowing any member of the chat to use
+    data = request.get_json()
+    chat_name = data.get("chat_name")
+
+    chat = Chat.get(Chat.id == chat_id)
+    query = Chat.update(name=chat_name).where(Chat.id == chat_id)
+    query.execute()
+    chat = Chat.get(Chat.id == chat_id)
+
+    return jsonify(model_to_dict(chat)), 200
+
+
+@chats.route('/<chat_id>', methods=['DELETE'])
+def delete_chat(chat_id):
+    try:
+        chat = Chat.get(Chat.id == chat_id)
+        query = Participation.delete().where(Participation.chat == chat)
+        query.execute()
+        if chat.delete_instance():
+            return "", 204
+        else:
+            return "", 400
+    except Exception as e:
+        return str(e), 400
+
+
+@chats.route('/<chat_id>/participants', methods=['POST'])
 def add_user_to_chat(chat_id):
     """
     Adds a specified user to a chat identified by url "chat_id"
@@ -63,14 +95,39 @@ def add_user_to_chat(chat_id):
     user_id = data.get("user_id")
     phone_number = data.get("phone_number")
     rank = data.get("rank")
+
     if rank is None or (user_id is None and phone_number is None):
-        return jsonify(success=False, error="Bad data")
+        return str("Bad Data"), 400
     try:
-        # TODO: Should it be querying for the chat and user
         Participation.create(chat=chat_id, user=user_id, rank=rank)
     except Exception as e:
-        return jsonify(success=False, error=str(e))
-    return jsonify(success=True)
+        return str(e), 400
+    return "", 204
+
+
+@chats.route('/<chat_id>/participants/<user_id>', methods=['PATCH'])
+def update_participant(chat_id, user_id):
+    data = request.get_json()
+    rank = data.get("rank")
+
+    try:
+        query = Participation.update(rank=rank).where(
+            Participation.chat == chat_id and Participation.user == user_id)
+        query.execute()
+        return "", 204
+    except Exception as e:
+        return str(e), 400
+
+
+@chats.route('/<chat_id>/participants/<user_id>', methods=['DELETE'])
+def delete_participant(chat_id, user_id):
+    try:
+        query = Participation.delete().where(Participation.chat == chat_id
+                                             and Participation.user == user_id)
+        query.execute()
+        return "", 204
+    except Exception as e:
+        return str(e), 400
 
 
 @chats.route('/<chat_id>/messages', methods=['POST'])
@@ -90,9 +147,9 @@ def send_message_to_chat(chat_id):
     message = data.get("content")
     size = data.get("size")
     if kind != "text" and kind != "image":
-        return jsonify(success=False, error="Wrong type")
+        return str("Wrong type"), 400
     elif size < 0 or size > 1:
-        return jsonify(success=False, error="Bad size")
+        return str("Bad size"), 400
     # TODO: if set to "image" test to make sure its a valid url
 
     data = {
@@ -109,4 +166,17 @@ def send_message_to_chat(chat_id):
     query.execute()
     # TODO: Update this using PostgreSQL json assessing features
 
-    return jsonify(success=True)
+    return jsonify(chat), 200
+
+
+@chats.route('/<chat_id>/messages/<message_index>', methods=['DELETE'])
+def delete_message_from_chat(chat_id, message_index):
+    try:
+        chat = Chat.get(Chat.id == chat_id).messages
+        del chat[int(message_index)]
+        query = Chat.update(messages=chat).where(Chat.id == chat_id)
+        query.execute()
+        # TODO: Update this using PostgreSQL json assessing features
+        return "", 204
+    except Exception as e:
+        return str(e), 400
