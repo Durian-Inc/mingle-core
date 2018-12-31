@@ -4,9 +4,9 @@ from flask_cors import cross_origin
 
 from six.moves.urllib.parse import urlencode
 
-from app.serve import CLIENT_ID
+from app.serve import CLIENT_ID, REDIRECT_URI, REDIRECT_AUDIENCE
 from app.models import AuthId, User, Participation, Chat
-from app.auth_utils import auth, auth0, jsonify, requires_auth, requires_auth_token
+from app.auth_utils import auth, auth0, jsonify, requires_auth
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
 
@@ -38,8 +38,8 @@ def callback_handling():
 def login():
     """Access the login page"""
     return auth0.authorize_redirect(
-        redirect_uri='http://localhost:8080/api/v1/users/callback',
-        audience='https://durian-inc.auth0.com/userinfo')
+        redirect_uri=REDIRECT_URI,
+        audience=REDIRECT_AUDIENCE)
 
 
 @users.route('/logout', methods=['GET'])
@@ -114,21 +114,17 @@ def user_chats(user_id):
 @auth.route('/public', methods=['GET', 'POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 def api_public():
-    # return(request.headers['Authorization'])
-    # return(jsonify(dict(request.headers)))
     """
         Route that requires no authentication.
     """
-    response = "No login necessary"
-    return jsonify(message=response)
+    return jsonify(message="Public route with no auth")
 
 
 @auth.route('/private', methods=['GET', 'POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
-@requires_auth_token
+@requires_auth
 def api_private():
     """
         Route that requires authentication
     """
-    response = "You are likely logged in so you good."
-    return jsonify(message=response)
+    return jsonify(message="Private route with auth")
