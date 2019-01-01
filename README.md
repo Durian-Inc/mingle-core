@@ -19,6 +19,8 @@ $ pipenv sync
 
 - Auth0 secret-key
 - Auth0 client-id
+- Auth0 domain
+- Auth0 audience
 - PostgreSQL host
 - PostgreSQL port
 - PostgreSQL database name
@@ -31,7 +33,7 @@ $ pipenv sync
 $ python3 manage.py --create all
 ```
 
-# How to run the application
+## How to run the application
 ```bash
 # Enter the virtual environment
 $ pipenv shell
