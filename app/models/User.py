@@ -7,7 +7,7 @@ from playhouse.postgres_ext import BooleanField, CharField, DateTimeField, Prima
 
 class User(BaseModel):
     id = PrimaryKeyField()
-    phone_number = CharField(null=True)
+    phone_number = CharField(null=True, unique=True)
     display_name = CharField()
     photo = CharField(null=True)
     date_created = DateTimeField(default=datetime.now)

@@ -8,6 +8,7 @@ from playhouse.postgres_ext import (BooleanField, CharField, DateTimeField,
 
 class Chat(BaseModel):
     id = PrimaryKeyField()
-    messages = JSONField(default=[])
+    events = JSONField(default=[])
     name = CharField()
     date_created = DateTimeField(default=datetime.now)
+    background = CharField(default="default")
