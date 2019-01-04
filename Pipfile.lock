@@ -1,7 +1,7 @@
 {
     "_meta": {
         "hash": {
-            "sha256": "6a8157a1e5550ee74a589f3e467811f9c97fea2663f41cebe6f446c23294fcae"
+            "sha256": "7329790245c338933b12987fe1d4a744cd9d9a333ed68f4e924e0f262364ccab"
         },
         "pipfile-spec": 6,
         "requires": {
@@ -25,10 +25,11 @@
         },
         "auth0-python": {
             "hashes": [
-                "sha256:727a1886c59e424b92e544fa897f04da7450dd0ff43b9a0263b4436d2868968b"
+                "sha256:86a6b436bd7b60fe06d44788ec162db2afc4a20796f195a36f5e1a4813645fd4",
+                "sha256:d96aeb734375c8f45c65837d5ba385a42e13f52f992f0a7ad7b43d38fcdd9016"
             ],
             "index": "pypi",
-            "version": "==3.4.0"
+            "version": "==3.5.0"
         },
         "authlib": {
             "hashes": [
@@ -307,6 +308,7 @@
                 "sha256:ba62f6b9ae09a88cbe3328aa1ccc1696462d489c92f73920ec473773f2f92f84",
                 "sha256:c292deeca9176c162e5a8e19be9c60edb99e855dbad3ea032f94e23249873ba6"
             ],
+            "index": "pypi",
             "version": "==3.3.1"
         },
         "python-dotenv": {
