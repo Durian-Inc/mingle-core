@@ -13,14 +13,14 @@ def list_all_users():
     """Lists all users"""
     # TODO: remove
     names = [{x.id: x.display_name} for x in User.select()]
-    return jsonify(success=True, payload=names)
+    return jsonify(names), 200
 
 
 @users.route('/<user_id>', methods=['GET'])
 def user_info(user_id):
     """Spits out all session information about user"""
     user = User.get(User.id == user_id)
-    return jsonify(success=True, payload=model_to_dict(user))
+    return jsonify(model_to_dict(user)), 200
 
 
 @users.route('/<user_id>', methods=['PATCH'])
@@ -32,7 +32,7 @@ def update_user(user_id):
     display_name = data.get("display_name")
 
     if phone_number is None and display_name is None:
-        return jsonify(success=True)
+        return "", 204
     elif phone_number is not None and display_name is None:
         query = User.update(phone_number=phone_number).where(
             User.id == user_id)
@@ -47,7 +47,7 @@ def update_user(user_id):
             phone_number=phone_number).where(User.id == user_id)
         query.execute()
     # TODO: Some error checking
-    return jsonify(success=True)
+    return "", 204
 
 
 @users.route('/<user_id>/chats', methods=['GET'])
@@ -58,4 +58,4 @@ def list_user_chats(user_id):
     for item in raw_chats:
         chat = Chat.get(Chat.id == item.chat)
         chats.append(model_to_dict(chat))
-    return jsonify(chats)
+    return jsonify(chats), 200

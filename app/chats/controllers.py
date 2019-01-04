@@ -16,6 +16,12 @@ def list_all_chats():
     return jsonify(chats), 200
 
 
+@chats.route('/<chat_id>', methods=['GET'])
+def get_chat_info(chat_id):
+    chat = chat_info(chat_id)
+    return jsonify(chat), 200
+
+
 @chats.route('/', methods=['POST'])
 def create_chat():
     """
@@ -45,21 +51,20 @@ def create_chat():
     return jsonify(model_to_dict(new_chat)), 201
 
 
-@chats.route('/<chat_id>', methods=['GET'])
-def get_chat_info(chat_id):
-    chat = chat_info(chat_id)
-    return jsonify(chat), 200
-
-
 @chats.route('/<chat_id>', methods=['PATCH'])
 def update_chat(chat_id):
     # TODO: Add authentication allowing any member of the chat to use
     data = request.get_json()
     chat_name = data.get("chat_name")
+    background = data.get("background")
 
     chat = Chat.get(Chat.id == chat_id)
-    query = Chat.update(name=chat_name).where(Chat.id == chat_id)
-    query.execute()
+    if chat_name:
+        query = Chat.update(name=chat_name).where(Chat.id == chat_id)
+        query.execute()
+    elif background:
+        query = Chat.update(background=background).where(Chat.id == chat_id)
+        query.execute()
     chat = Chat.get(Chat.id == chat_id)
 
     return jsonify(model_to_dict(chat)), 200
@@ -85,7 +90,7 @@ def add_user_to_chat(chat_id):
     Adds a specified user to a chat identified by url "chat_id"
 
     Client must post json including:
-        "rank": either 'member' or 'admin'
+        "is_admin": either 0 for member or 1 for admin
     Client must include in the json one of either:
         "user_id": the id of the user
         "phone_number": the phone number of the user
@@ -94,12 +99,12 @@ def add_user_to_chat(chat_id):
     data = request.get_json()
     user_id = data.get("user_id")
     phone_number = data.get("phone_number")
-    rank = data.get("rank")
+    is_admin = data.get("is_admin")
 
-    if rank is None or (user_id is None and phone_number is None):
+    if is_admin is None or (user_id is None and phone_number is None):
         return str("Bad Data"), 400
     try:
-        Participation.create(chat=chat_id, user=user_id, rank=rank)
+        Participation.create(chat=chat_id, user=user_id, is_admin=is_admin)
     except Exception as e:
         return str(e), 400
     return "", 204
@@ -108,10 +113,10 @@ def add_user_to_chat(chat_id):
 @chats.route('/<chat_id>/participants/<user_id>', methods=['PATCH'])
 def update_participant(chat_id, user_id):
     data = request.get_json()
-    rank = data.get("rank")
+    is_admin = data.get("is_admin")
 
     try:
-        query = Participation.update(rank=rank).where(
+        query = Participation.update(is_admin=is_admin).where(
             Participation.chat == chat_id and Participation.user == user_id)
         query.execute()
         return "", 204
@@ -122,10 +127,12 @@ def update_participant(chat_id, user_id):
 @chats.route('/<chat_id>/participants/<user_id>', methods=['DELETE'])
 def delete_participant(chat_id, user_id):
     try:
-        query = Participation.delete().where(Participation.chat == chat_id
-                                             and Participation.user == user_id)
-        query.execute()
-        return "", 204
+        participant = Participation.get(Participation.chat == chat_id,
+                                        Participation.user == user_id)
+        if participant.delete_instance():
+            return "", 204
+        else:
+            return "", 400
     except Exception as e:
         return str(e), 400
 
@@ -144,7 +151,7 @@ def send_message_to_chat(chat_id):
     data = request.get_json()
 
     kind = data.get("type")
-    message = data.get("content")
+    content = data.get("content")
     size = data.get("size")
     if kind != "text" and kind != "image":
         return str("Wrong type"), 400
@@ -152,29 +159,32 @@ def send_message_to_chat(chat_id):
         return str("Bad size"), 400
     # TODO: if set to "image" test to make sure its a valid url
 
-    data = {
-        "sender_id": 1,
-        "type": kind,
-        "content": message,
-        "size": size,
-        "seen_by": []
+    message = {
+        "event": "message",
+        "payload": {
+            "sender_id": 1,
+            "type": kind,
+            "content": content,
+            "size": size,
+            "seen_by": []
+        }
     }
     # TODO: Stop hardcoding the sender_id, and get the id using auth
-    chat = Chat.get(Chat.id == chat_id).messages
-    chat.append(data)
-    query = Chat.update(messages=chat).where(Chat.id == chat_id)
+    events = Chat.get(Chat.id == chat_id).events
+    events.append(message)
+    query = Chat.update(events=events).where(Chat.id == chat_id)
     query.execute()
     # TODO: Update this using PostgreSQL json assessing features
 
-    return jsonify(chat), 200
+    return jsonify(events), 200
 
 
 @chats.route('/<chat_id>/messages/<message_index>', methods=['DELETE'])
 def delete_message_from_chat(chat_id, message_index):
     try:
-        chat = Chat.get(Chat.id == chat_id).messages
-        del chat[int(message_index)]
-        query = Chat.update(messages=chat).where(Chat.id == chat_id)
+        events = Chat.get(Chat.id == chat_id).events
+        del events[int(message_index)]
+        query = Chat.update(events=events).where(Chat.id == chat_id)
         query.execute()
         # TODO: Update this using PostgreSQL json assessing features
         return "", 204

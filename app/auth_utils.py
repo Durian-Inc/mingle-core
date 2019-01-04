@@ -188,7 +188,7 @@ def callback_handling():
     res = add_user(userinfo['name'], userinfo['picture'], userinfo['sub'])
     if res:
         return jsonify(success=False, error=res)
-    return redirect(url_for('users.user_info'))
+    return redirect(url_for('users.list_all_users'))
 
 
 @auth.route('/login', methods=['GET'])
