@@ -4,7 +4,6 @@ from flask import Blueprint, jsonify, request, session
 from app.models import Chat, Participation, User
 
 from app.models import AuthId, User, Participation, Chat
-from app.auth_utils import auth, auth0, jsonify, requires_auth
 from playhouse.shortcuts import model_to_dict
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
