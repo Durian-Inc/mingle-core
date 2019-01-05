@@ -1,8 +1,10 @@
 """Interactions with users happen on these routes"""
 from flask import Blueprint, jsonify, request, session
 
+from app.auth.utils import requires_auth, user_is_logged_in
 from app.models import Chat, Participation, User
 
+from app.models import AuthId, User, Participation, Chat
 from playhouse.shortcuts import model_to_dict
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')
@@ -26,7 +28,6 @@ def user_info(user_id):
 @users.route('/<user_id>', methods=['PATCH'])
 def update_user(user_id):
     """Changes information about user specified by id in the url"""
-    # TODO: add auth that only allows this user id to access
     data = request.get_json()
     phone_number = data.get("phone_number")
     display_name = data.get("display_name")
@@ -70,5 +71,5 @@ def chat_updates(user_id):
         events = item.chat.events
         updates = events[item.cursor:]
         if updates:
-            chats.append({"chat": int(item.chat.id), "events": updates})
+            chats.append({"chat": item.chat.id, "events": updates})
     return jsonify(chats), 200

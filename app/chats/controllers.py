@@ -3,6 +3,7 @@ from flask import (jsonify, Blueprint, request)
 
 from app.models import Chat, Participation, User
 from app.chats.utils import chat_info
+from app.auth.utils import requires_auth, user_is_logged_in
 from playhouse.shortcuts import model_to_dict
 
 chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
@@ -23,6 +24,7 @@ def get_chat_info(chat_id):
 
 
 @chats.route('/', methods=['POST'])
+@user_is_logged_in
 def create_chat():
     """
     Creates a chat specified by a client
@@ -31,7 +33,6 @@ def create_chat():
         "chat_name": name for the chat
         "users": a list of users to add on creation of the chat
     """
-    # TODO: Add authentication allowing any logged in user to use
     data = request.get_json()
     chat_name = data.get("chat_name")
 
@@ -52,8 +53,9 @@ def create_chat():
 
 
 @chats.route('/<chat_id>', methods=['PATCH'])
+@user_is_logged_in
 def update_chat(chat_id):
-    # TODO: Add authentication allowing any member of the chat to use
+    # TODO: Add check for participation
     data = request.get_json()
     chat_name = data.get("chat_name")
     background = data.get("background")
@@ -85,6 +87,7 @@ def delete_chat(chat_id):
 
 
 @chats.route('/<chat_id>/participants', methods=['POST'])
+@user_is_logged_in
 def add_user_to_chat(chat_id):
     """
     Adds a specified user to a chat identified by url "chat_id"
@@ -95,7 +98,7 @@ def add_user_to_chat(chat_id):
         "user_id": the id of the user
         "phone_number": the phone number of the user
     """
-    # TODO: Add authentication allowing any member of the chat to use
+    # TODO: Add check for participation
     data = request.get_json()
     user_id = data.get("user_id")
     phone_number = data.get("phone_number")
@@ -152,6 +155,7 @@ def update_cursor(chat_id, user_id):
 
 
 @chats.route('/<chat_id>/messages', methods=['POST'])
+@user_is_logged_in
 def send_message_to_chat(chat_id):
     """
     Adds a specified message to a chat identified by url "chat_id"
@@ -161,7 +165,7 @@ def send_message_to_chat(chat_id):
         "content": corresponds to above, message or url
         "size": text only. 0.5 is normal size, spans from 0 to 1
     """
-    # TODO: Add authentication allowing any member of the chat to use
+    # TODO: Add check for participation
     data = request.get_json()
 
     kind = data.get("type")
