@@ -1,5 +1,6 @@
 from flask import jsonify, session, Blueprint, redirect, url_for
-from app.auth.utils import auth0, requires_auth
+from app.auth.utils import (auth0, requires_auth, user_is_logged_in, 
+                            clear_user_session_keys)
 from app.serve import CLIENT_ID, REDIRECT_AUDIENCE, REDIRECT_URI
 from six.moves.urllib.parse import urlencode
 
@@ -39,17 +40,18 @@ def login():
 
 
 @auth.route('/logout', methods=['GET'])
+@user_is_logged_in
 def logout():
     """Removes user login details from session, logging out the user"""
-    session.clear()
-    # TODO: Make clear only significant session storage
-    # TODO: Handle error messages and auth for this function
+    clear_user_session_keys()
+    # TODO: Handle error messages for this function
     # Redirect user to logout endpoint
     params = {
         'returnTo': url_for('auth.api_public', _external=True),
         'client_id': CLIENT_ID
     }
     return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
+
 
 @auth.route('/public', methods=['GET', 'POST'])
 def api_public():
@@ -63,6 +65,8 @@ def api_public():
 @requires_auth
 def api_private():
     """
-        Route that requires authentication
+        Route that requires authentication.
+        Used for redirecting once user is logged in and validated.
+        Information will be stored for validation for other routes.
     """
     return jsonify(message="Private route with auth")

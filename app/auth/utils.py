@@ -4,13 +4,15 @@ import json
 
 from flask import jsonify, session
 from jose import jwt
-from app.serve import CLIENT_ID, SECRET_KEY, app, AUTH0_DOMAIN, AUTHORIZE_URL, ACCESS_TOKEN_URL
+from app.serve import (CLIENT_ID, SECRET_KEY, app, AUTH0_DOMAIN, AUTHORIZE_URL,
+                       ACCESS_TOKEN_URL)
 from authlib.flask.client import OAuth
 from six.moves.urllib.request import urlopen
 
 
 
 ALGORITHMS = ["RS256"]
+KEYS_TO_CLEAR = ['profile', 'jwt_payload', 'token', 'token_sub']
 
 oauth = OAuth(app)
 
@@ -26,7 +28,7 @@ auth0 = oauth.register(
     },
 )
 
-# Error handler
+# Auth Error handler
 class AuthError(Exception):
     def __init__(self, error, status_code):
         self.error = error
@@ -54,9 +56,9 @@ def requires_scope(required_scope):
                 return True
     return False
 
+
 def requires_auth(func):
     """Decorator to specify that function needs to be authenticated"""
-
     @wraps(func)
     def decorated(*args, **kwargs):
         """Check authentication, or get failure"""
@@ -89,6 +91,7 @@ def requires_auth(func):
                             algorithms=ALGORITHMS,
                             audience=CLIENT_ID,
                             issuer=AUTH0_DOMAIN + "/")
+                        session['token_sub'] = payload['sub']
                     except jwt.ExpiredSignatureError:
                         raise AuthError({
                             "code": "token_expired",
@@ -110,5 +113,34 @@ def requires_auth(func):
                                 " token."
                             }, 401)
         return func(*args, **kwargs)
-
     return decorated
+
+
+def user_is_logged_in(func):
+    """Validate that the user's sub is the same as the token's"""
+    @wraps(func)
+    def decorated(*args, **kwargs):
+        try:
+            profile_sub = session['profile']['user_id']
+            token_sub = session['token_sub']
+            if token_sub != profile_sub:
+                raise AuthError({
+                    "code": "invalid_user",
+                    "description": "User is not logged in with token"
+                }, 401)
+        except KeyError:
+            raise AuthError({
+                "code": "key_error",
+                "description": "User is not logged in"
+            }, 401)
+        return func(*args, **kwargs)
+    return decorated
+
+
+def clear_user_session_keys():
+    """
+        Clear keys from the session that are relevent to the user.
+        Used at logout
+    """
+    for key in KEYS_TO_CLEAR:
+        session.pop(key)
