@@ -59,3 +59,16 @@ def list_user_chats(user_id):
         chat = Chat.get(Chat.id == item.chat)
         chats.append(model_to_dict(chat))
     return jsonify(chats), 200
+
+
+@users.route('/<user_id>/updates', methods=['GET'])
+def chat_updates(user_id):
+    """List all chat updates for a given user"""
+    chats = []
+    raw_chats = Participation.select().where(Participation.user == user_id)
+    for item in raw_chats:
+        events = item.chat.events
+        updates = events[item.cursor:]
+        if updates:
+            chats.append({"chat": int(item.chat.id), "events": updates})
+    return jsonify(chats), 200

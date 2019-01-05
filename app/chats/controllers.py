@@ -117,7 +117,7 @@ def update_participant(chat_id, user_id):
 
     try:
         query = Participation.update(is_admin=is_admin).where(
-            Participation.chat == chat_id and Participation.user == user_id)
+            Participation.chat == chat_id, Participation.user == user_id)
         query.execute()
         return "", 204
     except Exception as e:
@@ -133,6 +133,20 @@ def delete_participant(chat_id, user_id):
             return "", 204
         else:
             return "", 400
+    except Exception as e:
+        return str(e), 400
+
+
+@chats.route('/<chat_id>/cursors/<user_id>', methods=['PATCH'])
+def update_cursor(chat_id, user_id):
+    data = request.get_json()
+    new_cursor = data.get("cursor")
+
+    try:
+        query = Participation.update(cursor=new_cursor).where(
+            Participation.chat == chat_id, Participation.user == user_id)
+        query.execute()
+        return "", 204
     except Exception as e:
         return str(e), 400
 
@@ -179,14 +193,68 @@ def send_message_to_chat(chat_id):
     return jsonify(events), 200
 
 
-@chats.route('/<chat_id>/messages/<message_index>', methods=['DELETE'])
-def delete_message_from_chat(chat_id, message_index):
+"""
+@chats.route('/<chat_id>/events/<event_index>', methods=['DELETE'])
+def delete_message_from_chat(chat_id, event_index):
     try:
         events = Chat.get(Chat.id == chat_id).events
-        del events[int(message_index)]
+        del events[int(event_index)]
         query = Chat.update(events=events).where(Chat.id == chat_id)
         query.execute()
         # TODO: Update this using PostgreSQL json assessing features
         return "", 204
     except Exception as e:
         return str(e), 400
+"""
+
+
+@chats.route('/<chat_id>/likes', methods=['POST'])
+def like_message(chat_id):
+    # TODO: Add authentication allowing any member of the chat to use
+    data = request.get_json()
+
+    message_index = data.get("message_index")
+
+    # TODO: if set to "image" test to make sure its a valid url
+
+    like = {
+        "event": "like",
+        "payload": {
+            "sender_id": 1,
+            "message_index": message_index,
+        }
+    }
+    # TODO: Stop hardcoding the sender_id, and get the id using auth
+    events = Chat.get(Chat.id == chat_id).events
+    events.append(like)
+    query = Chat.update(events=events).where(Chat.id == chat_id)
+    query.execute()
+    # TODO: Update this using PostgreSQL json assessing features
+
+    return jsonify(events), 200
+
+
+@chats.route('/<chat_id>/likes', methods=['DELETE'])
+def unlike_message(chat_id):
+    # TODO: Add authentication allowing any member of the chat to use
+    data = request.get_json()
+
+    message_index = data.get("message_index")
+
+    # TODO: if set to "image" test to make sure its a valid url
+
+    like = {
+        "event": "dislike",
+        "payload": {
+            "sender_id": 1,
+            "message_index": message_index,
+        }
+    }
+    # TODO: Stop hardcoding the sender_id, and get the id using auth
+    events = Chat.get(Chat.id == chat_id).events
+    events.append(like)
+    query = Chat.update(events=events).where(Chat.id == chat_id)
+    query.execute()
+    # TODO: Update this using PostgreSQL json assessing features
+
+    return jsonify(events), 200
