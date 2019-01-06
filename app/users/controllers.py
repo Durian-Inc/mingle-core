@@ -1,7 +1,7 @@
 """Interactions with users happen on these routes"""
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request
 
-from app.auth.utils import requires_auth, user_is_logged_in
+from app.auth.utils import requires_auth
 from app.models import Chat, Participation, User
 
 from app.models import AuthId, User, Participation, Chat
@@ -18,7 +18,6 @@ def list_all_users():
 
 
 @users.route('/<user_id>', methods=['GET'])
-@user_is_logged_in
 def user_info(user_id):
     """Spits out all session information about user"""
     user = User.get(User.id == user_id)

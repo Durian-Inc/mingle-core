@@ -1,9 +1,10 @@
 """All routes related to chats and actions to modify them"""
 from flask import (jsonify, Blueprint, request, session)
+from flask_cors import cross_origin
 
 from app.models import Chat, Participation, User
 from app.chats.utils import chat_info
-from app.auth.utils import requires_auth, user_is_logged_in
+from app.auth.utils import requires_auth
 from playhouse.shortcuts import model_to_dict
 
 chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
@@ -11,6 +12,7 @@ chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
 
 @chats.route('/', methods=['GET'])
 def list_all_chats():
+    print(session)
     """Debug function to list the names of all chats"""
     # TODO: remove
     chats = [model_to_dict(chat) for chat in Chat.select()]
@@ -18,7 +20,8 @@ def list_all_chats():
 
 
 @chats.route('/', methods=['POST'])
-@user_is_logged_in
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
 def create_chat():
     """
     Creates a chat specified by a client
@@ -53,7 +56,8 @@ def get_chat_info(chat_id):
 
 
 @chats.route('/<chat_id>', methods=['PATCH'])
-@user_is_logged_in
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
 def update_chat(chat_id):
     # TODO: Add check for participation
     data = request.get_json()
@@ -82,7 +86,8 @@ def delete_chat(chat_id):
 
 
 @chats.route('/<chat_id>/participants', methods=['POST'])
-@user_is_logged_in
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
 def add_user_to_chat(chat_id):
     """
     Adds a specified user to a chat identified by url "chat_id"
@@ -134,7 +139,8 @@ def delete_participant(chat_id, user_id):
 
 
 @chats.route('/<chat_id>/messages', methods=['POST'])
-@user_is_logged_in
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
 def send_message_to_chat(chat_id):
     """
     Adds a specified message to a chat identified by url "chat_id"

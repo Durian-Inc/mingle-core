@@ -1,8 +1,8 @@
-from flask import jsonify, session, Blueprint, redirect, url_for
+"""All routes related to authentication"""
+from flask import jsonify, Blueprint, redirect, url_for
 from flask_cors import cross_origin
 
-from app.auth.utils import (auth0, requires_auth, user_is_logged_in, 
-                            clear_user_session_keys)
+from app.auth.utils import auth0, requires_auth
 from app.serve import CLIENT_ID, REDIRECT_AUDIENCE, REDIRECT_URI
 from six.moves.urllib.parse import urlencode
 
@@ -16,18 +16,9 @@ auth = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 def callback_handling():
     """Handles response from token endpoint to get the userinfo"""
     token = auth0.authorize_access_token()
-    session['token'] = token['id_token']
+    # TODO: Send the token back to the client
     resp = auth0.get('userinfo')
     userinfo = resp.json()
-
-    # Store the user information in flask session.
-    session['jwt_payload'] = userinfo
-    session['profile'] = {
-        'user_id': userinfo['sub'],
-        'name': userinfo['name'],
-        'picture': userinfo['picture']
-    }
-
     res = add_user(userinfo['name'], userinfo['picture'], userinfo['sub'])
     if res:
         return jsonify(success=False, error=res)
@@ -43,11 +34,11 @@ def login():
 
 
 @auth.route('/logout', methods=['GET'])
-@user_is_logged_in
+@cross_origin(headers=['Content-Type', 'Authorization'])
+@requires_auth
 def logout():
-    """Removes user login details from session, logging out the user"""
-    clear_user_session_keys()
-    # TODO: Handle error messages for this function
+    """Removes token from the client's side to log them out of the system"""
+    # TODO: Remove token from client
     # Redirect user to logout endpoint
     params = {
         'returnTo': url_for('auth.api_public', _external=True),
@@ -55,23 +46,18 @@ def logout():
     }
     return redirect(auth0.api_base_url + '/v2/logout?' + urlencode(params))
 
-
+# Routes used for debugging
 @auth.route('/public', methods=['GET', 'POST'])
-@cross_origin(headers=['Content-Type', 'Authorization'])
 def api_public():
     """
         Route that requires no authentication.
     """
     return jsonify(message="Public route with no auth")
 
-
+# Routes using authentication should implement cross_origin and call the requires_auth decorator
 @auth.route('/private', methods=['GET', 'POST'])
 @cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def api_private():
-    """
-        Route that requires authentication.
-        Used for redirecting once user is logged in and validated.
-        Information will be stored for validation for other routes.
-    """
+    """Route that requires authentication."""
     return jsonify(message="Private route with auth")

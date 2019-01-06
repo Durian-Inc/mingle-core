@@ -19,6 +19,12 @@ $ pipenv sync
 
 - Auth0 secret-key
 - Auth0 client-id
+- Auth0 domain
+- Auth0 audience
+- Auth0 redirect audience
+- Auth0 redirect uri
+- Auth0 authorize url
+- Auth0 access token url
 - PostgreSQL host
 - PostgreSQL port
 - PostgreSQL database name

@@ -42,20 +42,6 @@ def handle_auth_error(ex):
     return response
 
 
-def requires_scope(required_scope):
-    """Determines if the required scope is present in the Access Token
-    Args:
-        required_scope (str): The scope required to access the resource
-    """
-    token = session['token']
-    unverified_claims = jwt.get_unverified_claims(token)
-    if unverified_claims.get("scope"):
-        token_scopes = unverified_claims["scope"].split()
-        for token_scope in token_scopes:
-            if token_scope == required_scope:
-                return True
-    return False
-
 def get_token_auth_header():
     """Obtains the Access Token from the Authorization Header
     """
@@ -130,29 +116,3 @@ def requires_auth(f):
         raise AuthError({"code": "invalid_header",
                         "description": "Unable to find appropriate key"}, 401)
     return decorated
-
-
-def user_is_logged_in(func):
-    """
-        Check to see if the user's information has been saved to the session.
-    """
-    @wraps(func)
-    def decorated(*args, **kwargs):
-        print(session)
-        print(kwargs)
-        if "profile" not in session:
-            raise AuthError({
-                "code": "auth_error",
-                "description": "User is not logged in"
-            }, 401)            
-        return func(*args, **kwargs)
-    return decorated
-
-
-def clear_user_session_keys():
-    """
-        Clear keys from the session that are relevent to the user.
-        Used at logout
-    """
-    for key in KEYS_TO_CLEAR:
-        session.pop(key)
