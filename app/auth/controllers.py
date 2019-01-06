@@ -1,4 +1,6 @@
 from flask import jsonify, session, Blueprint, redirect, url_for
+from flask_cors import cross_origin
+
 from app.auth.utils import (auth0, requires_auth, user_is_logged_in, 
                             clear_user_session_keys)
 from app.serve import CLIENT_ID, REDIRECT_AUDIENCE, REDIRECT_URI
@@ -6,6 +8,7 @@ from six.moves.urllib.parse import urlencode
 
 from app.users.utils import add_user
 from app.users.controllers import users
+from app.models import User
 
 auth = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 
@@ -28,7 +31,7 @@ def callback_handling():
     res = add_user(userinfo['name'], userinfo['picture'], userinfo['sub'])
     if res:
         return jsonify(success=False, error=res)
-    return redirect(url_for('auth.api_private'))
+    return redirect(url_for('users.user_info', user_id=User.select().count()))
 
 
 @auth.route('/login', methods=['GET'])
@@ -54,6 +57,7 @@ def logout():
 
 
 @auth.route('/public', methods=['GET', 'POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
 def api_public():
     """
         Route that requires no authentication.
@@ -62,6 +66,7 @@ def api_public():
 
 
 @auth.route('/private', methods=['GET', 'POST'])
+@cross_origin(headers=['Content-Type', 'Authorization'])
 @requires_auth
 def api_private():
     """

@@ -18,6 +18,7 @@ def list_all_users():
 
 
 @users.route('/<user_id>', methods=['GET'])
+@user_is_logged_in
 def user_info(user_id):
     """Spits out all session information about user"""
     user = User.get(User.id == user_id)

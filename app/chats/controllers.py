@@ -1,5 +1,5 @@
 """All routes related to chats and actions to modify them"""
-from flask import (jsonify, Blueprint, request)
+from flask import (jsonify, Blueprint, request, session)
 
 from app.models import Chat, Participation, User
 from app.chats.utils import chat_info
