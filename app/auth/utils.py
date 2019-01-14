@@ -5,7 +5,7 @@ import json
 from flask import jsonify, session, request, _request_ctx_stack
 from jose import jwt
 from app.serve import (CLIENT_ID, SECRET_KEY, app, AUTH0_DOMAIN, AUTHORIZE_URL,
-                       ACCESS_TOKEN_URL)
+                       ACCESS_TOKEN_URL, API_AUDIENCE)
 from authlib.flask.client import OAuth
 from six.moves.urllib.request import urlopen
 
@@ -75,6 +75,11 @@ def requires_auth(f):
     """
     @wraps(f)
     def decorated(*args, **kwargs):
+        debug = False
+        try:    
+            debug = request.json['debug']
+        except:
+            print('No debug')
         token = get_token_auth_header()
         jsonurl = urlopen(AUTH0_DOMAIN+"/.well-known/jwks.json")
         jwks = json.loads(jsonurl.read())
@@ -91,12 +96,20 @@ def requires_auth(f):
                 }
         if rsa_key:
             try:
-                payload = jwt.decode(
-                    token,
-                    rsa_key,
-                    algorithms=ALGORITHMS,
-                    audience=CLIENT_ID,
-                    issuer=AUTH0_DOMAIN + "/")
+                if debug:
+                    payload = jwt.decode(
+                        token,
+                        rsa_key,
+                        algorithms=ALGORITHMS,
+                        audience=API_AUDIENCE,
+                        issuer=AUTH0_DOMAIN + "/")
+                else:
+                     payload = jwt.decode(
+                        token,
+                        rsa_key,
+                        algorithms=ALGORITHMS,
+                        audience=CLIENT_ID,
+                        issuer=AUTH0_DOMAIN + "/")                   
             except jwt.ExpiredSignatureError:
                 raise AuthError({"code": "token_expired",
                                 "description": "token is expired"}, 401)
