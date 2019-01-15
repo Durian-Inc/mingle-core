@@ -17,7 +17,7 @@ def create_some(table_names):
     targets = []
     for table in tables:
         for table_name in table_names:
-            if table_name == type(table).__name__:
+            if table_name == table.__name__:
                 targets.append(table)
     if targets:
         with db:
@@ -37,7 +37,7 @@ def drop_some(table_names):
     targets = []
     for table in tables:
         for table_name in table_names:
-            if table_name == type(table).__name__:
+            if table_name == table.__name__:
                 targets.append(table)
     if targets:
         with db:
@@ -88,12 +88,13 @@ def handle_args(args):
         time.sleep(4)
         drop_all()
         return
-    if args.create:
-        print("Creating:", args.create)
-        create_some(args.create)
+
     if args.drop:
         print("Dropping:", args.drop)
         drop_some(args.drop)
+    if args.create:
+        print("Creating:", args.create)
+        create_some(args.create)
 
 
 if __name__ == "__main__":

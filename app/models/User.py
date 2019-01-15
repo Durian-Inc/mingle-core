@@ -10,4 +10,4 @@ class User(BaseModel):
     phone_number = CharField(null=True, unique=True)
     display_name = CharField()
     photo = CharField(null=True)
-    date_created = DateTimeField(default=datetime.now)
+    created = DateTimeField(default=datetime.now().isoformat())

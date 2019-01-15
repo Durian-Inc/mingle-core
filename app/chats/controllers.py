@@ -2,7 +2,7 @@
 from flask import (jsonify, Blueprint, request)
 
 from app.models import Chat, Participation, User
-from app.chats.utils import chat_info
+from app.chats.utils import chat_info, create_event
 from app.auth.utils import requires_auth, user_is_logged_in
 from playhouse.shortcuts import model_to_dict
 
@@ -58,18 +58,18 @@ def update_chat(chat_id):
     # TODO: Add check for participation
     data = request.get_json()
     chat_name = data.get("chat_name")
-    background = data.get("background")
+    theme = data.get("theme")
 
     chat = Chat.get(Chat.id == chat_id)
     if chat_name:
-        query = Chat.update(name=chat_name).where(Chat.id == chat_id)
-        query.execute()
-    elif background:
-        query = Chat.update(background=background).where(Chat.id == chat_id)
-        query.execute()
-    chat = Chat.get(Chat.id == chat_id)
+        chat.name = chat_name
+    elif theme:
+        chat.theme = theme
 
-    return jsonify(model_to_dict(chat)), 200
+    if chat.save():
+        return jsonify(model_to_dict(chat)), 200
+    else:
+        return "", 400
 
 
 @chats.route('/<chat_id>', methods=['DELETE'])
@@ -143,15 +143,16 @@ def delete_participant(chat_id, user_id):
 @chats.route('/<chat_id>/cursors/<user_id>', methods=['PATCH'])
 def update_cursor(chat_id, user_id):
     data = request.get_json()
-    new_cursor = data.get("cursor")
 
-    try:
-        query = Participation.update(cursor=new_cursor).where(
-            Participation.chat == chat_id, Participation.user == user_id)
-        query.execute()
-        return "", 204
-    except Exception as e:
-        return str(e), 400
+    cursor = data.get("cursor")
+
+    participation = Participation.get(Participation.chat == chat_id,
+                                      Participation.user == user_id)
+    participation.cursor = cursor
+    if participation.save():
+        return "", 200
+    else:
+        return "", 400
 
 
 @chats.route('/<chat_id>/messages', methods=['POST'])
@@ -168,33 +169,28 @@ def send_message_to_chat(chat_id):
     # TODO: Add check for participation
     data = request.get_json()
 
-    kind = data.get("type")
+    message_type = data.get("type")
     content = data.get("content")
     size = data.get("size")
-    if kind != "text" and kind != "image":
+
+    if message_type != "text" and message_type != "image":
         return str("Wrong type"), 400
     elif size < 0 or size > 1:
         return str("Bad size"), 400
     # TODO: if set to "image" test to make sure its a valid url
 
-    message = {
-        "event": "message",
-        "payload": {
-            "sender_id": 1,
-            "type": kind,
-            "content": content,
-            "size": size,
-            "seen_by": []
-        }
-    }
-    # TODO: Stop hardcoding the sender_id, and get the id using auth
-    events = Chat.get(Chat.id == chat_id).events
-    events.append(message)
-    query = Chat.update(events=events).where(Chat.id == chat_id)
-    query.execute()
-    # TODO: Update this using PostgreSQL json assessing features
+    result = create_event(
+        chat_id,
+        "message",
+        1,  # TODO: Stop hardcoding the sender_id, and get the id using auth
+        message_type=message_type,
+        content=content,
+        size=size)
 
-    return jsonify(events), 200
+    if result:
+        return jsonify(result), 200
+    else:
+        return "", 400
 
 
 """
@@ -219,23 +215,16 @@ def like_message(chat_id):
 
     message_index = data.get("message_index")
 
-    # TODO: if set to "image" test to make sure its a valid url
+    result = create_event(
+        chat_id,
+        "like",
+        1,  # TODO: Stop hardcoding the sender_id, and get the id using auth
+        message_index=message_index)
 
-    like = {
-        "event": "like",
-        "payload": {
-            "sender_id": 1,
-            "message_index": message_index,
-        }
-    }
-    # TODO: Stop hardcoding the sender_id, and get the id using auth
-    events = Chat.get(Chat.id == chat_id).events
-    events.append(like)
-    query = Chat.update(events=events).where(Chat.id == chat_id)
-    query.execute()
-    # TODO: Update this using PostgreSQL json assessing features
-
-    return jsonify(events), 200
+    if result:
+        return jsonify(result), 200
+    else:
+        return "", 400
 
 
 @chats.route('/<chat_id>/likes', methods=['DELETE'])
@@ -245,20 +234,13 @@ def unlike_message(chat_id):
 
     message_index = data.get("message_index")
 
-    # TODO: if set to "image" test to make sure its a valid url
+    result = create_event(
+        chat_id,
+        "dislike",
+        1,  # TODO: Stop hardcoding the sender_id, and get the id using auth
+        message_index=message_index)
 
-    like = {
-        "event": "dislike",
-        "payload": {
-            "sender_id": 1,
-            "message_index": message_index,
-        }
-    }
-    # TODO: Stop hardcoding the sender_id, and get the id using auth
-    events = Chat.get(Chat.id == chat_id).events
-    events.append(like)
-    query = Chat.update(events=events).where(Chat.id == chat_id)
-    query.execute()
-    # TODO: Update this using PostgreSQL json assessing features
-
-    return jsonify(events), 200
+    if result:
+        return jsonify(result), 200
+    else:
+        return "", 400

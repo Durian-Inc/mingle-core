@@ -20,7 +20,6 @@ REDIRECT_URI = os.getenv("REDIRECT-URI")
 ACCESS_TOKEN_URL = os.getenv("ACCESS-TOKEN-URL")
 AUTHORIZE_URL = os.getenv("AUTHORIZE-URL")
 REDIRECT_AUDIENCE = os.getenv("REDIRECT-AUDIENCE")
-print(DATABASE_HOST, DATABASE_PORT, ACCESS_TOKEN_URL)
 
 app = Flask("Vera")
 app.config.from_object('config')

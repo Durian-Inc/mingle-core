@@ -1,14 +1,15 @@
 """Stores info for a group chat"""
 from datetime import datetime
 
-from app.models import BaseModel
+from app.models import BaseModel, Theme
 from playhouse.postgres_ext import (BooleanField, CharField, DateTimeField,
-                                    JSONField, PrimaryKeyField)
+                                    JSONField, PrimaryKeyField,
+                                    ForeignKeyField)
 
 
 class Chat(BaseModel):
     id = PrimaryKeyField()
     events = JSONField(default=[])
     name = CharField()
-    date_created = DateTimeField(default=datetime.now)
-    background = CharField(default="default")
+    created = DateTimeField(default=datetime.now().isoformat())
+    theme = ForeignKeyField(Theme)
