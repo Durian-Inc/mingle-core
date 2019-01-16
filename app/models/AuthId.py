@@ -1,7 +1,8 @@
 """Ties a third party auth id to a User in our database"""
 from datetime import datetime
+
 from app.models import BaseModel, User
-from playhouse.postgres_ext import CharField, ForeignKeyField, DateTimeField
+from playhouse.postgres_ext import CharField, DateTimeField, ForeignKeyField
 
 
 class AuthId(BaseModel):

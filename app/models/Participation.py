@@ -1,7 +1,9 @@
 """The relationship between a User and a Chat"""
 from datetime import datetime
-from app.models import BaseModel, User, Chat
-from playhouse.postgres_ext import BooleanField, ForeignKeyField, IntegerField, Check, DateTimeField
+
+from app.models import BaseModel, Chat, User
+from playhouse.postgres_ext import (BooleanField, DateTimeField,
+                                    ForeignKeyField, IntegerField)
 
 
 class Participation(BaseModel):

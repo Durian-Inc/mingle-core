@@ -1,4 +1,4 @@
-from app.models import User, AuthId
+from app.models import AuthId, User
 
 
 def maybe_add_user(display_name, photo_url, auth_id):

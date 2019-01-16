@@ -2,7 +2,7 @@
 from datetime import datetime
 
 from app.models import BaseModel
-from playhouse.postgres_ext import BooleanField, CharField, DateTimeField, PrimaryKeyField
+from playhouse.postgres_ext import CharField, DateTimeField, PrimaryKeyField
 
 
 class User(BaseModel):

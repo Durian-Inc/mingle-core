@@ -1,10 +1,8 @@
 """Interactions with users happen on these routes"""
-from flask import Blueprint, jsonify, request, session
+from flask import Blueprint, jsonify, request
 
 from app.auth.utils import requires_auth, user_is_logged_in
-from app.models import Chat, Participation, User
-
-from app.models import AuthId, User, Participation, Chat
+from app.models import AuthId, Chat, Participation, User
 from playhouse.shortcuts import model_to_dict
 
 users = Blueprint('users', __name__, url_prefix='/api/v1/users/')

@@ -1,15 +1,15 @@
 """Utility functions for using authentication"""
-from functools import wraps
 import json
+from functools import wraps
+from urllib.parse import urljoin
 
+import requests
 from flask import jsonify, session
-from jose import jwt
-from app.serve import (CLIENT_ID, SECRET_KEY, app, AUTH0_DOMAIN, AUTHORIZE_URL,
-                       ACCESS_TOKEN_URL)
+
+from app.serve import (ACCESS_TOKEN_URL, AUTH0_DOMAIN, AUTHORIZE_URL,
+                       CLIENT_ID, SECRET_KEY, app)
 from authlib.flask.client import OAuth
-from six.moves.urllib.request import urlopen
-
-
+from jose import jwt
 
 ALGORITHMS = ["RS256"]
 KEYS_TO_CLEAR = ['profile', 'jwt_payload', 'token', 'token_sub']
@@ -27,6 +27,7 @@ auth0 = oauth.register(
         'scope': 'openid profile',
     },
 )
+
 
 # Auth Error handler
 class AuthError(Exception):
@@ -59,6 +60,7 @@ def requires_scope(required_scope):
 
 def requires_auth(func):
     """Decorator to specify that function needs to be authenticated"""
+
     @wraps(func)
     def decorated(*args, **kwargs):
         """Check authentication, or get failure"""
@@ -70,8 +72,9 @@ def requires_auth(func):
                 return jsonify(success=False, error="Token is not in session")
             else:
                 token = session['token']
-                jsonurl = urlopen(AUTH0_DOMAIN + "/.well-known/jwks.json")
-                jwks = json.loads(jsonurl.read())
+                jsonurl = requests.get(
+                    urljoin("https://", AUTH0_DOMAIN, ".well-known/jwks.json"))
+                jwks = jsonurl.json()
                 unverified_header = jwt.get_unverified_header(token)
                 rsa_key = {}
                 for key in jwks["keys"]:
@@ -106,34 +109,39 @@ def requires_auth(func):
                             "please check the audience and issuer"
                         }, 401)
                     except Exception:
-                        raise AuthError(
-                            {
-                                "code": "invalid_header",
-                                "description": "Unable to parse authentication"
-                                " token."
-                            }, 401)
+                        raise AuthError({
+                            "code":
+                            "invalid_header",
+                            "description":
+                            "Unable to parse authentication"
+                            " token."
+                        }, 401)
         return func(*args, **kwargs)
+
     return decorated
 
 
 def user_is_logged_in(func):
     """Validate that the user's sub is the same as the token's"""
+
     @wraps(func)
     def decorated(*args, **kwargs):
         try:
             profile_sub = session['profile']['user_id']
             token_sub = session['token_sub']
             if token_sub != profile_sub:
-                raise AuthError({
-                    "code": "invalid_user",
-                    "description": "User is not logged in with token"
-                }, 401)
+                raise AuthError(
+                    {
+                        "code": "invalid_user",
+                        "description": "User is not logged in with token"
+                    }, 401)
         except KeyError:
             raise AuthError({
                 "code": "key_error",
                 "description": "User is not logged in"
             }, 401)
         return func(*args, **kwargs)
+
     return decorated
 
 

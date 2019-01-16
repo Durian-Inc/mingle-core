@@ -1,6 +1,6 @@
 """Stores info for a theme"""
 from app.models import BaseModel
-from playhouse.postgres_ext import (CharField, PrimaryKeyField)
+from playhouse.postgres_ext import CharField, PrimaryKeyField
 
 
 class Theme(BaseModel):

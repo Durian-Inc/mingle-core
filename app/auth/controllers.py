@@ -1,11 +1,11 @@
-from flask import jsonify, session, Blueprint, redirect, url_for
-from app.auth.utils import (auth0, requires_auth, user_is_logged_in,
-                            clear_user_session_keys)
-from app.serve import CLIENT_ID, REDIRECT_AUDIENCE, REDIRECT_URI
-from six.moves.urllib.parse import urlencode
+from flask import Blueprint, jsonify, redirect, session, url_for
 
-from app.users.utils import maybe_add_user
+from app.auth.utils import (auth0, clear_user_session_keys, requires_auth,
+                            user_is_logged_in)
+from app.serve import CLIENT_ID, REDIRECT_AUDIENCE, REDIRECT_URI
 from app.users.controllers import users
+from app.users.utils import maybe_add_user
+from six.moves.urllib.parse import urlencode
 
 auth = Blueprint('auth', __name__, url_prefix='/api/v1/auth')
 

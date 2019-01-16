@@ -1,9 +1,9 @@
 """All routes related to chats and actions to modify them"""
-from flask import (jsonify, Blueprint, request)
+from flask import Blueprint, jsonify, request
 
-from app.models import Chat, Participation, User
-from app.chats.utils import chat_info, create_event
 from app.auth.utils import requires_auth, user_is_logged_in
+from app.chats.utils import chat_info, create_event
+from app.models import Chat, Participation, User
 from playhouse.shortcuts import model_to_dict
 
 chats = Blueprint('chats', __name__, url_prefix='/api/v1/chats')
@@ -191,21 +191,6 @@ def send_message_to_chat(chat_id):
         return jsonify(result), 200
     else:
         return "", 400
-
-
-"""
-@chats.route('/<chat_id>/events/<event_index>', methods=['DELETE'])
-def delete_message_from_chat(chat_id, event_index):
-    try:
-        events = Chat.get(Chat.id == chat_id).events
-        del events[int(event_index)]
-        query = Chat.update(events=events).where(Chat.id == chat_id)
-        query.execute()
-        # TODO: Update this using PostgreSQL json assessing features
-        return "", 204
-    except Exception as e:
-        return str(e), 400
-"""
 
 
 @chats.route('/<chat_id>/likes', methods=['POST'])

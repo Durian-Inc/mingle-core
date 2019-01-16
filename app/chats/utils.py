@@ -1,6 +1,6 @@
-from app.models import Chat, Participation
 from datetime import datetime
 
+from app.models import Chat, Participation
 from playhouse.shortcuts import model_to_dict
 
 
